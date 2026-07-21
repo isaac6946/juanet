@@ -14,58 +14,83 @@
   </div>
   <h1 style="text-align:center;margin:0 0 8px;">Verify your email</h1>
   <p style="text-align:center;color:var(--text-muted);font-size:14px;line-height:1.6;margin:0 0 24px;">
-    We sent a verification link to your inbox. Open it, then come back and tap the button below to continue.
+    We sent a verification link to <strong id="targetEmail">your inbox</strong>. Open it (check spam too),
+    then enter your password below and continue.
   </p>
 
   <div id="msg" class="msg"></div>
 
-  <button class="btn btn-power" id="checkBtn" style="margin-bottom:10px;">I've verified — continue</button>
+  <form id="checkForm">
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" required autocomplete="email">
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input type="password" id="password" required autocomplete="current-password">
+    </div>
+    <button type="submit" class="btn btn-power" id="checkBtn" style="margin-bottom:10px;">I've verified — continue</button>
+  </form>
   <button class="btn btn-outline" id="resendBtn">Resend verification email</button>
 
-  <p class="link-row"><a href="#" id="logoutLink">Log out</a></p>
+  <p class="link-row"><a href="index.html">Back to log in</a></p>
 </div>
 
 <script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>
 <script src="js/juanet.js"></script>
 <script>
 const msg = document.getElementById('msg');
+const checkForm = document.getElementById('checkForm');
 const checkBtn = document.getElementById('checkBtn');
 const resendBtn = document.getElementById('resendBtn');
+const emailInput = document.getElementById('email');
 
-const cached = Backendless.LocalCache.get('current-user');
-if(!cached){
-  window.location.href = 'index.html';
+const pendingEmail = sessionStorage.getItem('juanet-pending-email');
+if(pendingEmail){
+  emailInput.value = pendingEmail;
+  document.getElementById('targetEmail').textContent = pendingEmail;
 }
 
-checkBtn.addEventListener('click', function(){
+checkForm.addEventListener('submit', function(e){
+  e.preventDefault();
   hideMsg(msg);
   setBtnLoading(checkBtn, true, 'Checking…', "I've verified — continue");
-  Backendless.UserService.login(cached.email, cached.password, true)
+
+  const email = emailInput.value.trim();
+  const password = document.getElementById('password').value;
+
+  Backendless.UserService.login(email, password, true)
     .then(user => {
       if(user.emailVerified){
         Backendless.LocalCache.set('current-user', user);
+        sessionStorage.removeItem('juanet-pending-email');
         window.location.href = 'home.html';
       } else {
-        showMsg(msg, 'Still not verified. Open the link in the email we sent, then try again.', 'error');
+        showMsg(msg, 'Your email is still not verified. Open the link we sent you, then try again.', 'error');
         setBtnLoading(checkBtn, false, '', "I've verified — continue");
       }
     })
-    .catch(() => {
-      showMsg(msg, 'Could not re-check your status right now. Please try again.', 'error');
+    .catch(err => {
+      const text = (err && err.message) ? err.message : '';
+      if(/confirm/i.test(text)){
+        showMsg(msg, 'Your email is still not verified. Open the link we sent you, then try again.', 'error');
+      } else {
+        showMsg(msg, text || 'Could not check your status. Check your email and password and try again.', 'error');
+      }
       setBtnLoading(checkBtn, false, '', "I've verified — continue");
     });
 });
 
 resendBtn.addEventListener('click', function(){
   hideMsg(msg);
-  Backendless.UserService.resendEmailConfirmation(cached.email)
-    .then(() => showMsg(msg, 'Verification email resent — check your inbox.', 'ok'))
+  const email = emailInput.value.trim();
+  if(!email){
+    showMsg(msg, 'Enter your email above first.', 'error');
+    return;
+  }
+  Backendless.UserService.resendEmailConfirmation(email)
+    .then(() => showMsg(msg, 'Verification email resent — check your inbox (and spam folder).', 'ok'))
     .catch(err => showMsg(msg, err.message || 'Could not resend right now.', 'error'));
-});
-
-document.getElementById('logoutLink').addEventListener('click', function(e){
-  e.preventDefault();
-  juanetLogout();
 });
 </script>
 </body>
