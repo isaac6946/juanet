@@ -1,11 +1,76 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>My App</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juanet — Log in</title>
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <h1>Hello from my app</h1>
-  <script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>
-  <script src="app.js"></script>
+
+<div class="center-screen">
+  <div class="logo-mark">
+    <div class="charge-bars active"><span></span><span></span><span></span><span></span></div>
+  </div>
+  <h1 style="text-align:center;margin:0 0 4px;">Juanet</h1>
+  <p style="text-align:center;color:var(--text-muted);font-size:13.5px;margin:0 0 28px;">
+    Reliable power &amp; internet, made accessible.
+  </p>
+
+  <div id="msg" class="msg"></div>
+
+  <form id="loginForm">
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" required autocomplete="email" placeholder="you@example.com">
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input type="password" id="password" required autocomplete="current-password" placeholder="••••••••">
+    </div>
+    <button type="submit" class="btn btn-power" id="loginBtn">Log in</button>
+  </form>
+
+  <p class="link-row">
+    Don't have an account? <a href="register.html">Create one</a>
+  </p>
+</div>
+
+<script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>
+<script src="js/juanet.js"></script>
+<script>
+const form = document.getElementById('loginForm');
+const msg = document.getElementById('msg');
+const btn = document.getElementById('loginBtn');
+
+// If already logged in and verified, skip straight to the app
+const cached = Backendless.LocalCache.get('current-user');
+if(cached && cached.emailVerified){
+  window.location.href = 'home.html';
+}
+
+form.addEventListener('submit', function(e){
+  e.preventDefault();
+  hideMsg(msg);
+  setBtnLoading(btn, true, 'Logging in…', 'Log in');
+
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+
+  Backendless.UserService.login(email, password, true)
+    .then(user => {
+      Backendless.LocalCache.set('current-user', user);
+      if(!user.emailVerified){
+        window.location.href = 'verify.html';
+      } else {
+        window.location.href = 'home.html';
+      }
+    })
+    .catch(err => {
+      showMsg(msg, err.message || 'Could not log in. Check your details and try again.', 'error');
+      setBtnLoading(btn, false, '', 'Log in');
+    });
+});
+</script>
 </body>
 </html>

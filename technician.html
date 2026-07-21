@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juanet — Join as a Technician</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand"><div class="charge-bars signal active"><span></span><span></span><span></span><span></span></div>Juanet</div>
+  </div>
+
+  <div class="app-main">
+    <span class="eyebrow">Careers</span>
+    <h1 class="page-title">Join as a technician</h1>
+    <p class="page-sub">Tell us about your field, experience, and upload proof of your skills — certificates or portfolio files.</p>
+
+    <div id="msg" class="msg"></div>
+
+    <form id="techForm">
+      <div class="field"><label for="tName">Full name</label><input type="text" id="tName" required></div>
+      <div class="field"><label for="tEmail">Email</label><input type="email" id="tEmail" required></div>
+      <div class="field"><label for="tPhone">Phone number</label><input type="tel" id="tPhone" required></div>
+      <div class="field">
+        <label for="tField">Field of expertise</label>
+        <select id="tField" required>
+          <option value="" disabled selected>Select a field</option>
+          <option>Solar & Power Systems</option>
+          <option>Network & Internet Installation</option>
+          <option>Electrical Wiring</option>
+          <option>Device Repair & Servicing</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="tYears">Years of experience</label>
+        <input type="number" id="tYears" min="0" required>
+      </div>
+      <div class="field">
+        <label for="tNote">Describe your experience &amp; skills</label>
+        <textarea id="tNote" rows="4" required placeholder="Summarize relevant jobs, training, or certifications"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="tFile">Evidence — certificates or portfolio (PDF or image)</label>
+        <div class="file-drop" id="dropZone">Tap to choose a file</div>
+        <input type="file" id="tFile" accept=".pdf,.jpg,.jpeg,.png" style="display:none;" required>
+        <p class="hint">One file, up to ~10MB. This is stored with your application for review.</p>
+      </div>
+
+      <button type="submit" class="btn btn-signal" id="techBtn">Submit application</button>
+    </form>
+  </div>
+
+  <nav class="tabbar">
+    <a href="home.html"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Home</a>
+    <a href="catalog.html"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="8"/><rect x="3" y="13" width="8" height="8"/><rect x="13" y="13" width="8" height="8"/></svg>Catalog</a>
+    <a href="services.html"><svg viewBox="0 0 24 24"><path d="M2 8.5a16 16 0 0 1 20 0"/><path d="M5 12a11 11 0 0 1 14 0"/><path d="M8.5 15.5a6 6 0 0 1 7 0"/><circle cx="12" cy="19" r="1"/></svg>Services</a>
+    <a href="maintenance.html"><svg viewBox="0 0 24 24"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>Maintain</a>
+    <a href="jobs.html" class="active"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Jobs</a>
+  </nav>
+
+</div>
+
+<script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>
+<script src="js/juanet.js"></script>
+<script>
+juanetRequireAuth();
+const cached = Backendless.LocalCache.get('current-user');
+const msg = document.getElementById('msg');
+const btn = document.getElementById('techBtn');
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('tFile');
+
+if(cached){
+  document.getElementById('tName').value = cached.name || '';
+  document.getElementById('tEmail').value = cached.email || '';
+  document.getElementById('tPhone').value = cached.phone || '';
+}
+
+dropZone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', () => {
+  if(fileInput.files.length){
+    dropZone.textContent = fileInput.files[0].name;
+    dropZone.classList.add('has-file');
+  }
+});
+
+document.getElementById('techForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  hideMsg(msg);
+  const file = fileInput.files[0];
+  if(!file){ showMsg(msg, 'Please attach a certificate or portfolio file.', 'error'); return; }
+
+  setBtnLoading(btn, true, 'Uploading…', 'Submit application');
+
+  Backendless.Files.upload(file, 'technician_uploads/' + Date.now() + '_' + file.name)
+    .then(fileInfo => {
+      const record = {
+        fullName: document.getElementById('tName').value.trim(),
+        email: document.getElementById('tEmail').value.trim(),
+        phone: document.getElementById('tPhone').value.trim(),
+        fieldOfExpertise: document.getElementById('tField').value,
+        experienceYears: Number(document.getElementById('tYears').value),
+        experienceNote: document.getElementById('tNote').value.trim(),
+        portfolioUrl: fileInfo.fileURL,
+        status: 'submitted'
+      };
+      return Backendless.Data.of(TABLES.TECHNICIANS).save(record);
+    })
+    .then(() => {
+      showMsg(msg, 'Application submitted — we\'ll review your details and get in touch.', 'ok');
+      document.getElementById('techForm').reset();
+      dropZone.textContent = 'Tap to choose a file';
+      dropZone.classList.remove('has-file');
+      setBtnLoading(btn, false, '', 'Submit application');
+    })
+    .catch(err => {
+      showMsg(msg, err.message || 'Could not submit your application.', 'error');
+      setBtnLoading(btn, false, '', 'Submit application');
+    });
+});
+</script>
+</body>
+</html>

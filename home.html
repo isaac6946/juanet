@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juanet — Home</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="charge-bars active"><span></span><span></span><span></span><span></span></div>
+      Juanet
+    </div>
+    <div style="display:flex;gap:14px;">
+      <a href="about.html" aria-label="About Juanet" style="color:var(--text-muted);font-size:13px;font-weight:600;">About</a>
+      <a href="#" id="logoutLink" style="color:var(--text-muted);font-size:13px;font-weight:600;">Log out</a>
+    </div>
+  </div>
+
+  <div class="app-main">
+    <span class="eyebrow" id="greetTime">Welcome back</span>
+    <h1 class="page-title" id="greetName">—</h1>
+    <p class="page-sub">Here's what's happening with your Juanet account today.</p>
+
+    <div class="stat-row">
+      <div class="stat"><div class="num" id="statOutput">—</div><div class="lbl">Device output (W)</div></div>
+      <div class="stat"><div class="num" id="statUsage">—</div><div class="lbl">Internet used (MB)</div></div>
+    </div>
+
+    <div class="divider-bars"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+
+    <a href="catalog.html" class="unit-card">
+      <div class="unit-icon"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a4 4 0 0 1 8 0v2"/></svg></div>
+      <div><div class="unit-name">Product Catalog</div><div class="unit-meta">Browse units by power output &amp; size</div></div>
+    </a>
+    <a href="services.html" class="unit-card">
+      <div class="unit-icon"><svg viewBox="0 0 24 24"><path d="M2 8.5a16 16 0 0 1 20 0"/><path d="M5 12a11 11 0 0 1 14 0"/><path d="M8.5 15.5a6 6 0 0 1 7 0"/><circle cx="12" cy="19" r="1"/></svg></div>
+      <div><div class="unit-name">Internet &amp; Services</div><div class="unit-meta">Recharge devices, buy airtime</div></div>
+    </a>
+    <a href="maintenance.html" class="unit-card">
+      <div class="unit-icon"><svg viewBox="0 0 24 24"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></div>
+      <div><div class="unit-name">Maintenance</div><div class="unit-meta">Output, usage &amp; top-up schedule</div></div>
+    </a>
+    <a href="jobs.html" class="unit-card">
+      <div class="unit-icon"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 13h18"/></svg></div>
+      <div><div class="unit-name">Job Seekers Portal</div><div class="unit-meta">Openings, applications &amp; technician sign-up</div></div>
+    </a>
+
+  </div>
+
+  <nav class="tabbar">
+    <a href="home.html" class="active"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Home</a>
+    <a href="catalog.html"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="8"/><rect x="3" y="13" width="8" height="8"/><rect x="13" y="13" width="8" height="8"/></svg>Catalog</a>
+    <a href="services.html"><svg viewBox="0 0 24 24"><path d="M2 8.5a16 16 0 0 1 20 0"/><path d="M5 12a11 11 0 0 1 14 0"/><path d="M8.5 15.5a6 6 0 0 1 7 0"/><circle cx="12" cy="19" r="1"/></svg>Services</a>
+    <a href="maintenance.html"><svg viewBox="0 0 24 24"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>Maintain</a>
+    <a href="jobs.html"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Jobs</a>
+  </nav>
+
+</div>
+
+<script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>
+<script src="js/juanet.js"></script>
+<script>
+juanetRequireAuth();
+const cached = Backendless.LocalCache.get('current-user');
+if(cached){
+  document.getElementById('greetName').textContent = cached.name ? cached.name.split(' ')[0] : 'there';
+}
+document.getElementById('logoutLink').addEventListener('click', function(e){ e.preventDefault(); juanetLogout(); });
+
+const hr = new Date().getHours();
+document.getElementById('greetTime').textContent = hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening';
+
+// Pull the user's device summary for the two stat tiles, if a Devices row exists for them
+if(cached){
+  const q = Backendless.DataQueryBuilder.create().setWhereClause("ownerId = '"+cached.objectId+"'").setPageSize(1);
+  Backendless.Data.of(TABLES.DEVICES).find(q)
+    .then(rows => {
+      if(rows && rows.length){
+        document.getElementById('statOutput').textContent = rows[0].outputWatts ?? '—';
+        document.getElementById('statUsage').textContent = rows[0].internetUsageMB ?? '—';
+      } else {
+        document.getElementById('statOutput').textContent = '0';
+        document.getElementById('statUsage').textContent = '0';
+      }
+    })
+    .catch(() => {
+      document.getElementById('statOutput').textContent = '—';
+      document.getElementById('statUsage').textContent = '—';
+    });
+}
+</script>
+</body>
+</html>
