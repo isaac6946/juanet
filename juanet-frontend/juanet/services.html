@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juanet — Internet &amp; Services</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand"><div class="charge-bars signal active"><span></span><span></span><span></span><span></span></div>Juanet</div>
+  </div>
+
+  <div class="app-main">
+    <span class="eyebrow">Stay connected</span>
+    <h1 class="page-title">Internet &amp; Services</h1>
+    <p class="page-sub">Recharge your Juanet device's internet package or top up airtime.</p>
+
+    <div id="msg" class="msg"></div>
+
+    <div class="card">
+      <h3 style="margin:0 0 12px;">Recharge internet</h3>
+      <form id="internetForm">
+        <div class="field">
+          <label for="devicePkg">Package</label>
+          <select id="devicePkg" required>
+            <option value="" disabled selected>Choose a package</option>
+            <option value="1GB — Daily">1GB — Daily</option>
+            <option value="5GB — Weekly">5GB — Weekly</option>
+            <option value="20GB — Monthly">20GB — Monthly</option>
+            <option value="Unlimited — Monthly">Unlimited — Monthly</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="devicePhone">Phone number for payment</label>
+          <input type="tel" id="devicePhone" required placeholder="+254 7XX XXX XXX">
+        </div>
+        <button type="submit" class="btn btn-signal">Recharge internet</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 12px;">Buy airtime</h3>
+      <form id="airtimeForm">
+        <div class="field">
+          <label for="airtimeAmount">Amount (KES)</label>
+          <input type="number" id="airtimeAmount" min="10" required placeholder="e.g. 100">
+        </div>
+        <div class="field">
+          <label for="airtimePhone">Phone number</label>
+          <input type="tel" id="airtimePhone" required placeholder="+254 7XX XXX XXX">
+        </div>
+        <button type="submit" class="btn btn-power">Buy airtime</button>
+      </form>
+    </div>
+
+    <div class="divider-bars"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    <h3 style="margin:0 0 8px;">Recent activity</h3>
+    <div id="history" class="card"><p style="color:var(--text-muted);font-size:13.5px;margin:0;">Loading…</p></div>
+  </div>
+
+  <nav class="tabbar">
+    <a href="home.html"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Home</a>
+    <a href="catalog.html"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="8"/><rect x="3" y="13" width="8" height="8"/><rect x="13" y="13" width="8" height="8"/></svg>Catalog</a>
+    <a href="services.html" class="active"><svg viewBox="0 0 24 24"><path d="M2 8.5a16 16 0 0 1 20 0"/><path d="M5 12a11 11 0 0 1 14 0"/><path d="M8.5 15.5a6 6 0 0 1 7 0"/><circle cx="12" cy="19" r="1"/></svg>Services</a>
+    <a href="maintenance.html"><svg viewBox="0 0 24 24"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>Maintain</a>
+    <a href="jobs.html"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Jobs</a>
+  </nav>
+
+</div>
+
+<script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>
+<script src="js/juanet.js"></script>
+<script>
+juanetRequireAuth();
+const cached = Backendless.LocalCache.get('current-user');
+const msg = document.getElementById('msg');
+const history = document.getElementById('history');
+
+function loadHistory(){
+  const q = Backendless.DataQueryBuilder.create()
+    .setWhereClause("ownerId = '"+cached.objectId+"'")
+    .setSortBy(['created DESC']).setPageSize(6);
+  Backendless.Data.of(TABLES.RECHARGES).find(q)
+    .then(rows => {
+      if(!rows || !rows.length){
+        history.innerHTML = '<p style="color:var(--text-muted);font-size:13.5px;margin:0;">No recharges yet.</p>';
+        return;
+      }
+      history.innerHTML = rows.map(r => `
+        <div class="list-item">
+          <div><div class="list-title">${r.type} — ${r.packageName || r.amount}</div>
+          <div class="list-sub">${r.status || 'pending'}</div></div>
+        </div>`).join('');
+    })
+    .catch(() => { history.innerHTML = '<p style="color:var(--text-muted);font-size:13.5px;margin:0;">Could not load activity.</p>'; });
+}
+loadHistory();
+
+document.getElementById('internetForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  hideMsg(msg);
+  const record = {
+    ownerId: cached.objectId,
+    type: 'internet',
+    packageName: document.getElementById('devicePkg').value,
+    phone: document.getElementById('devicePhone').value.trim(),
+    status: 'pending'
+  };
+  Backendless.Data.of(TABLES.RECHARGES).save(record)
+    .then(() => { showMsg(msg, 'Internet recharge requested.', 'ok'); e.target.reset(); loadHistory(); })
+    .catch(err => showMsg(msg, err.message || 'Could not process recharge.', 'error'));
+});
+
+document.getElementById('airtimeForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  hideMsg(msg);
+  const record = {
+    ownerId: cached.objectId,
+    type: 'airtime',
+    amount: Number(document.getElementById('airtimeAmount').value),
+    phone: document.getElementById('airtimePhone').value.trim(),
+    status: 'pending'
+  };
+  Backendless.Data.of(TABLES.RECHARGES).save(record)
+    .then(() => { showMsg(msg, 'Airtime purchase requested.', 'ok'); e.target.reset(); loadHistory(); })
+    .catch(err => showMsg(msg, err.message || 'Could not process purchase.', 'error'));
+});
+</script>
+</body>
+</html>
