@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juanet — Verify your email</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="center-screen">
+  <div class="logo-mark">
+    <div class="charge-bars signal active"><span></span><span></span><span></span><span></span></div>
+  </div>
+  <h1 style="text-align:center;margin:0 0 8px;">Verify your email</h1>
+  <p style="text-align:center;color:var(--text-muted);font-size:14px;line-height:1.6;margin:0 0 24px;">
+    We sent a verification link to your inbox. Open it, then come back and tap the button below to continue.
+  </p>
+
+  <div id="msg" class="msg"></div>
+
+  <button class="btn btn-power" id="checkBtn" style="margin-bottom:10px;">I've verified — continue</button>
+  <button class="btn btn-outline" id="resendBtn">Resend verification email</button>
+
+  <p class="link-row"><a href="#" id="logoutLink">Log out</a></p>
+</div>
+
+<script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>
+<script src="js/juanet.js"></script>
+<script>
+const msg = document.getElementById('msg');
+const checkBtn = document.getElementById('checkBtn');
+const resendBtn = document.getElementById('resendBtn');
+
+const cached = Backendless.LocalCache.get('current-user');
+if(!cached){
+  window.location.href = 'index.html';
+}
+
+checkBtn.addEventListener('click', function(){
+  hideMsg(msg);
+  setBtnLoading(checkBtn, true, 'Checking…', "I've verified — continue");
+  Backendless.UserService.login(cached.email, cached.password, true)
+    .then(user => {
+      if(user.emailVerified){
+        Backendless.LocalCache.set('current-user', user);
+        window.location.href = 'home.html';
+      } else {
+        showMsg(msg, 'Still not verified. Open the link in the email we sent, then try again.', 'error');
+        setBtnLoading(checkBtn, false, '', "I've verified — continue");
+      }
+    })
+    .catch(() => {
+      showMsg(msg, 'Could not re-check your status right now. Please try again.', 'error');
+      setBtnLoading(checkBtn, false, '', "I've verified — continue");
+    });
+});
+
+resendBtn.addEventListener('click', function(){
+  hideMsg(msg);
+  Backendless.UserService.resendEmailConfirmation(cached.email)
+    .then(() => showMsg(msg, 'Verification email resent — check your inbox.', 'ok'))
+    .catch(err => showMsg(msg, err.message || 'Could not resend right now.', 'error'));
+});
+
+document.getElementById('logoutLink').addEventListener('click', function(e){
+  e.preventDefault();
+  juanetLogout();
+});
+</script>
+</body>
+</html>
