@@ -7,7 +7,6 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-
 <div class="center-screen">
   <div class="logo-mark">
     <div class="charge-bars active"><span></span><span></span><span></span><span></span></div>
@@ -16,9 +15,7 @@
   <p style="text-align:center;color:var(--text-muted);font-size:13.5px;margin:0 0 28px;">
     Reliable power &amp; internet, made accessible.
   </p>
-
   <div id="msg" class="msg"></div>
-
   <form id="loginForm">
     <div class="field">
       <label for="email">Email</label>
@@ -30,12 +27,10 @@
     </div>
     <button type="submit" class="btn btn-power" id="loginBtn">Log in</button>
   </form>
-
   <p class="link-row">
     Don't have an account? <a href="register.html">Create one</a>
   </p>
 </div>
-
 <script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>
 <script src="js/juanet.js"></script>
 <script>
@@ -43,7 +38,6 @@ const form = document.getElementById('loginForm');
 const msg = document.getElementById('msg');
 const btn = document.getElementById('loginBtn');
 
-// If already logged in and verified, skip straight to the app
 const cached = Backendless.LocalCache.get('current-user');
 if(cached && cached.emailVerified){
   window.location.href = 'home.html';
@@ -53,7 +47,6 @@ form.addEventListener('submit', function(e){
   e.preventDefault();
   hideMsg(msg);
   setBtnLoading(btn, true, 'Logging in…', 'Log in');
-
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
 
@@ -61,13 +54,20 @@ form.addEventListener('submit', function(e){
     .then(user => {
       Backendless.LocalCache.set('current-user', user);
       if(!user.emailVerified){
+        sessionStorage.setItem('juanet-pending-email', email);
         window.location.href = 'verify.html';
       } else {
         window.location.href = 'home.html';
       }
     })
     .catch(err => {
-      showMsg(msg, err.message || 'Could not log in. Check your details and try again.', 'error');
+      const text = (err && err.message) ? err.message : '';
+      if(/confirm/i.test(text)){
+        sessionStorage.setItem('juanet-pending-email', email);
+        window.location.href = 'verify.html';
+        return;
+      }
+      showMsg(msg, text || 'Could not log in. Check your details and try again.', 'error');
       setBtnLoading(btn, false, '', 'Log in');
     });
 });
