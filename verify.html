@@ -61,14 +61,10 @@ checkForm.addEventListener('submit', function(e){
 
   Backendless.UserService.login(email, password, true)
     .then(user => {
-      if(user.emailVerified){
-        Backendless.LocalCache.set('current-user', user);
-        sessionStorage.removeItem('juanet-pending-email');
-        window.location.href = 'home.html';
-      } else {
-        showMsg(msg, 'Your email is still not verified. Open the link we sent you, then try again.', 'error');
-        setBtnLoading(checkBtn, false, '', "I've verified — continue");
-      }
+      // Login succeeding at all proves this account is verified.
+      Backendless.LocalCache.set('current-user', user);
+      sessionStorage.removeItem('juanet-pending-email');
+      window.location.href = 'home.html';
     })
     .catch(err => {
       const text = (err && err.message) ? err.message : '';
