@@ -7,11 +7,15 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+
 <div class="center-screen" style="justify-content:flex-start;padding-top:48px;">
+  <img src="assets/juanet-icon.png" alt="Juanet" class="icon-badge power-ring">
   <span class="eyebrow">Get started</span>
   <h1 class="page-title">Create your account</h1>
   <p class="page-sub">Set up access to your Juanet device, services, and account tools.</p>
+
   <div id="msg" class="msg"></div>
+
   <form id="regForm">
     <div class="field">
       <label for="name">Full name</label>
@@ -50,18 +54,22 @@
     </div>
     <button type="submit" class="btn btn-power" id="regBtn">Create account</button>
   </form>
+
   <p class="link-row">Already have an account? <a href="index.html">Log in</a></p>
 </div>
+
 <script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>
 <script src="js/juanet.js"></script>
 <script>
 const form = document.getElementById('regForm');
 const msg = document.getElementById('msg');
 const btn = document.getElementById('regBtn');
+
 form.addEventListener('submit', function(e){
   e.preventDefault();
   hideMsg(msg);
   setBtnLoading(btn, true, 'Creating account…', 'Create account');
+
   const user = new Backendless.User();
   user.name = document.getElementById('name').value.trim();
   user.email = document.getElementById('email').value.trim();
@@ -69,6 +77,7 @@ form.addEventListener('submit', function(e){
   user.phone = document.getElementById('phone').value.trim();
   user.nationality = document.getElementById('nationality').value;
   user.language = document.getElementById('language').value;
+
   Backendless.UserService.register(user)
     .then(() => {
       sessionStorage.setItem('juanet-pending-email', user.email);

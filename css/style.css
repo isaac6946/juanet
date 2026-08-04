@@ -219,3 +219,21 @@ button, input, select, textarea{font-family:'Inter',sans-serif;font-size:16px;}
 .logo-mark .charge-bars span:nth-child(4){background:var(--signal);}
 
 .hint{font-size:12px;color:var(--text-muted);margin-top:-8px;margin-bottom:14px;line-height:1.5;}
+
+/* ---------- Logo image treatments ---------- */
+.brand-logo{
+  width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;
+  box-shadow:0 0 0 2px rgba(245,166,35,0.35);
+}
+.splash-logo{
+  display:block;margin:0 auto 22px;
+  width:170px;max-width:72%;
+  border-radius:18px;
+  box-shadow:0 10px 34px rgba(0,0,0,0.55), 0 0 0 1px var(--border);
+}
+.icon-badge{
+  width:76px;height:76px;border-radius:50%;object-fit:cover;
+  display:block;margin:0 auto 18px;
+  box-shadow:0 0 0 3px rgba(47,217,196,0.4), 0 8px 24px rgba(0,0,0,0.5);
+}
+.icon-badge.power-ring{box-shadow:0 0 0 3px rgba(245,166,35,0.4), 0 8px 24px rgba(0,0,0,0.5);}
