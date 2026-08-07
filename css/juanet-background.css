@@ -1,0 +1,18 @@
+/* ============================================================
+   JUANET — homestead scene background
+   Used only on the login, register, and verify screens.
+   Include this AFTER css/style.css so it can override the
+   default body background. A dark gradient sits between the
+   photo and the page content so text and form fields stay
+   easy to read no matter where they land on the image.
+   ============================================================ */
+
+body{
+  background-image:
+    linear-gradient(180deg, rgba(20,17,15,0.80), rgba(20,17,15,0.92)),
+    url('../assets/homestead-scene.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
