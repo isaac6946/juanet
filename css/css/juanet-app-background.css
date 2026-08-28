@@ -1,0 +1,18 @@
+/* ==========================================================
+   JUANET — global app background (solar rooftop photo)
+   Include this AFTER css/style.css on every page so it
+   overrides the default body background. A dark gradient
+   sits between the photo and page content so text and form
+   fields stay easy to read no matter where they land on
+   the image.
+   ========================================================== */
+
+body{
+  background-image:
+    linear-gradient(180deg, rgba(20,17,15,0.85), rgba(20,17,15,0.90)),
+    url('../assets/nuno-marques-0GbrjL3vZF4-unsplash.jpg');
+  background-size: cover;
+  background-position: center 35%;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
